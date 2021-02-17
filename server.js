@@ -1,8 +1,6 @@
 //required libraries
 const SHA256 = require("crypto-js/sha256");
 
-
-
 //set up express
 var express = require("express");
 var app = express();
@@ -42,6 +40,10 @@ app.param("collectionName", (req, res, next, collectionName) => {
 const bodyParser = require("body-parser");
 var jsonParser = bodyParser.json();
 
+//set up password encryption
+var bcrypt = require("bcrypt");
+let saltRounds = 12;
+
 //global variables:
 let voltValue = 5.1; //multiply kWh by this number to obtain the volt token
 
@@ -74,9 +76,7 @@ class Blockchain {
     this.pendingTransactions = [];
   }
 
-  populatePendingTransactions(){
-    
-  }
+  populatePendingTransactions() {}
 
   //creation of the genesis block (the first block within the blockchain system)
   createGenesisBlock() {
@@ -126,33 +126,34 @@ voltToken.addBlock(
 
 console.log(JSON.stringify(voltToken, null, 4));
 
-
 //API requests
 
 //post request to add an user to the DB
 app.post("/account/:collectionName", (request, response, next) => {
-  console.log(request.body.username)
-  request.collection.find({"username": request.body.username}).toArray((e, results) => {
+  let registerArray;
 
-    if(results){
-      console.log("added to db")
- request.collection.insertOne(request.body, (e, results) => {
-    console.log(request.body)
-    if (e) return next(e);
-    response.send(results.ops);
+  let password = request.body.password;
+  bcrypt.hash(password, saltRounds, (err, hash) => {
+    
   });
+  request.collection
+    .find({ username: request.body.username })
+    .toArray((e, results) => {
+      if (!results.length == 0) {
+        console.log("Already exists");
+        response.send(false);
+      } else {
+        console.log("added to db");
 
-    }
-    else{
-      console.log("Already exists")
-      response.send(false);
-    }
-    console.log(results)
-  });
- 
+        request.collection.insertOne(request.body, (e, results) => {
+          console.log(request.body);
+          if (e) return next(e);
+          response.send(true);
+        });
+      }
+      console.log(results);
+    });
 });
-
-
 
 //listen on following port
 app.listen(process.env.PORT || 5000); //heroku automatically assigns a port, 5000 alone will cause an timeout
