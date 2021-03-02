@@ -134,7 +134,7 @@ app.post("/account/:collectionName", (request, response, next) => {
 
   let password = request.body.password;
   bcrypt.hash(password, saltRounds, (err, hash) => {
-    
+    registerArray = {email: request.body.email, username: request.body.username}
   });
   request.collection
     .find({ username: request.body.username })
